@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard.jsx'
 import CreateComplaint from './pages/CreateComplaint.jsx'
 import AdminDashboard from './pages/AdminDashboard.jsx'
 import ComplaintDetails from './pages/ComplaintDetails.jsx'
+import WorkerDashboard from './pages/WorkerDashboard.jsx'
 import { getDemoSession } from './data/demoAuth.js'
 
 function App() {
@@ -21,6 +22,11 @@ function App() {
     return null
   }
 
+  if (currentPath === '/worker' && session?.role !== 'worker') {
+    window.location.replace('/login')
+    return null
+  }
+
   if (currentPath === '/complaints/new') {
     return <CreateComplaint />
   }
@@ -32,6 +38,10 @@ function App() {
 
   if (currentPath === '/admin') {
     return <AdminDashboard />
+  }
+
+  if (currentPath === '/worker') {
+    return <WorkerDashboard />
   }
 
   if (currentPath === '/dashboard') {

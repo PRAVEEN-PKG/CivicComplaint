@@ -83,7 +83,12 @@ function Login() {
       return
     }
 
-    window.location.href = session.role === 'admin' ? '/admin' : '/dashboard'
+    const destinationByRole = {
+      citizen: '/dashboard',
+      admin: '/admin',
+      worker: '/worker',
+    }
+    window.location.href = destinationByRole[session.role]
   }
 
   return (
@@ -184,6 +189,7 @@ function Login() {
             <strong>Demo credentials</strong>
             <span>Citizen: citizen@civiccomplaint.com · Citizen@123</span>
             <span>Admin: admin@civiccomplaint.com · Admin@123</span>
+            <span>Worker: worker@civiccomplaint.com · Worker@123</span>
           </div>
 
           <p className="login-signup">

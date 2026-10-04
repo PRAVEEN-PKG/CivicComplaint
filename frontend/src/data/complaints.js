@@ -20,7 +20,7 @@ const seedComplaints = [
     status: 'Submitted',
     priority: 'High',
     department: 'Roads & Infrastructure',
-    assignedWorker: 'Unassigned',
+    assignedWorker: 'worker@civiccomplaint.com',
     image: { name: 'road-condition-demo.jpg', demo: true },
     updates: [
       {
@@ -262,6 +262,34 @@ function initializeComplaints() {
   const saved = localStorage.getItem(STORAGE_KEY)
   if (saved !== null) {
     cachedComplaints = parseComplaints(saved)
+    const potholeComplaint = cachedComplaints.find((complaint) => complaint.id === 'CC-2026-00124')
+    if (
+      potholeComplaint
+      && potholeComplaint.assignedWorker === 'Unassigned'
+      && potholeComplaint.status === 'Submitted'
+      && potholeComplaint.updates.length === 1
+    ) {
+      const timestamp = new Date().toISOString()
+      const assignmentUpdate = {
+        id: `${potholeComplaint.id}-worker-assignment`,
+        title: 'Assigned to field worker',
+        description: 'Ravi Kumar has been assigned to this complaint.',
+        timestamp,
+        department: potholeComplaint.department,
+        status: potholeComplaint.status,
+        actor: 'admin',
+      }
+      cachedComplaints = cachedComplaints.map((complaint) => (
+        complaint.id === potholeComplaint.id
+          ? {
+            ...complaint,
+            assignedWorker: 'worker@civiccomplaint.com',
+            updates: [assignmentUpdate, ...complaint.updates],
+          }
+          : complaint
+      ))
+      persistComplaints(cachedComplaints)
+    }
     return cachedComplaints
   }
 
@@ -318,7 +346,7 @@ export function useComplaints() {
   return useSyncExternalStore(subscribeToComplaints, getComplaints, () => seedComplaints)
 }
 
-export function updateComplaint(id, changes) {
+export function updateComplaint(id, changes, activity = {}) {
   const currentComplaints = initializeComplaints()
   const current = currentComplaints.find((complaint) => complaint.id === id)
   if (!current) return null
@@ -335,13 +363,14 @@ export function updateComplaint(id, changes) {
     .join('; ')
   const update = {
     id: `${id}-update-${Date.now()}`,
-    title: changedFields.includes('status')
+    title: activity.title || (changedFields.includes('status')
       ? `Status updated to ${nextComplaint.status}`
-      : 'Complaint assignment updated',
-    description: summary,
+      : 'Complaint assignment updated'),
+    description: activity.description || summary,
     timestamp,
     department: nextComplaint.department || '',
     status: nextComplaint.status,
+    actor: activity.actor || 'admin',
   }
   nextComplaint.updates = [update, ...current.updates]
 

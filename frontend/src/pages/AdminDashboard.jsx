@@ -24,7 +24,7 @@ const departmentOptions = [
   'Citizen Service Desk',
 ]
 
-const workerOptions = ['Unassigned', 'Arun Mehta', 'Nisha Rao', 'Imran Khan', 'Sara Patel', 'Dev Shah', 'Ravi Kumar']
+const workerOptions = ['Unassigned', 'worker@civiccomplaint.com', 'Arun Mehta', 'Nisha Rao', 'Imran Khan', 'Sara Patel', 'Dev Shah', 'Ravi Kumar']
 const statusOptions = ['Submitted', 'Under Review', 'In Progress', 'Resolved', 'Reopened']
 const priorityOptions = ['Low', 'Medium', 'High', 'Critical']
 
