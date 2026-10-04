@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { loginDemoUser } from '../data/demoAuth.js'
 
 function CivicMark() {
   return (
@@ -74,7 +75,15 @@ function Login() {
 
   function handleSubmit(event) {
     event.preventDefault()
-    setNotice('Sign-in is not connected yet. Your details have not been sent.')
+    const formData = new FormData(event.currentTarget)
+    const session = loginDemoUser(formData.get('email'), formData.get('password'))
+
+    if (!session) {
+      setNotice('The email address or password is incorrect. Check your details and try again.')
+      return
+    }
+
+    window.location.href = session.role === 'admin' ? '/admin' : '/dashboard'
   }
 
   return (
@@ -117,6 +126,7 @@ function Login() {
                 type="email"
                 placeholder="you@example.com"
                 autoComplete="email"
+                onChange={() => setNotice('')}
                 required
               />
             </div>
@@ -133,6 +143,7 @@ function Login() {
                   type={passwordVisible ? 'text' : 'password'}
                   placeholder="Enter your password"
                   autoComplete="current-password"
+                  onChange={() => setNotice('')}
                   required
                 />
                 <button
@@ -166,8 +177,14 @@ function Login() {
             <button className="login-submit" type="submit">
               Login <span aria-hidden="true">→</span>
             </button>
-            <p className="login-notice" aria-live="polite">{notice}</p>
+            <p className={`login-notice${notice ? ' login-notice-error' : ''}`} aria-live="polite" role={notice ? 'alert' : undefined}>{notice}</p>
           </form>
+
+          <div className="login-demo-credentials" aria-label="Demo credentials">
+            <strong>Demo credentials</strong>
+            <span>Citizen: citizen@civiccomplaint.com · Citizen@123</span>
+            <span>Admin: admin@civiccomplaint.com · Admin@123</span>
+          </div>
 
           <p className="login-signup">
             New to CivicComplaint?             <a href="/signup">Create an account</a>

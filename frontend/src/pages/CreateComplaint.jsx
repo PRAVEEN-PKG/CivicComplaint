@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { ComplaintStorageError, createComplaint } from '../data/complaints.js'
+import { logoutDemoUser } from '../data/demoAuth.js'
 
 const DESCRIPTION_LIMIT = 600
 const PHOTO_LIMIT = 10 * 1024 * 1024
@@ -140,6 +142,7 @@ function CreateComplaint() {
   const [locationNotice, setLocationNotice] = useState('')
   const [notice, setNotice] = useState('')
   const [success, setSuccess] = useState(false)
+  const [submittedComplaintId, setSubmittedComplaintId] = useState('')
   const [previewUrl, setPreviewUrl] = useState('')
   const [touched, setTouched] = useState({})
   const fileInputRef = useRef(null)
@@ -211,11 +214,30 @@ function CreateComplaint() {
       return
     }
 
-    setSuccess(true)
+    try {
+      const createdComplaint = createComplaint({
+        title,
+        category: category === 'Pothole / Road Damage' ? 'Road Damage' : category,
+        description,
+        location,
+        image: photo,
+      })
+      setSubmittedComplaintId(createdComplaint.id)
+      setSuccess(true)
+    } catch (error) {
+      if (!(error instanceof ComplaintStorageError)) throw error
+      setNotice('Your complaint could not be saved in this browser. Check that browser storage is available, then try again.')
+    }
   }
 
   function saveDraft() {
     setNotice('Draft saved in this page only. It has not been sent or stored.')
+  }
+
+  function handleLogout(event) {
+    event.preventDefault()
+    logoutDemoUser()
+    window.location.href = '/login'
   }
 
   function categoryError() {
@@ -253,7 +275,7 @@ function CreateComplaint() {
               Report Complaint
             </a>
             <a href="/login" onClick={() => setMenuOpen(false)}>Profile</a>
-            <a className="dashboard-logout" href="/login" onClick={() => setMenuOpen(false)}>Logout</a>
+            <a className="dashboard-logout" href="/login" onClick={handleLogout}>Logout</a>
           </div>
         </nav>
       </header>
@@ -644,7 +666,7 @@ function CreateComplaint() {
             </p>
             <div className="complaint-success-id">
               <span>Demo complaint ID</span>
-              <strong>CC-2026-00124</strong>
+              <strong>{submittedComplaintId}</strong>
             </div>
             <div className="complaint-success-actions">
               <a href="/dashboard" className="complaint-submit-button">
@@ -655,7 +677,7 @@ function CreateComplaint() {
               </a>
             </div>
             <p className="complaint-success-demo-note">
-              Demo only — no complaint details or photos were sent or stored.
+              Demo only — complaint details are saved in this browser and are not sent to a server.
             </p>
           </section>
         </div>

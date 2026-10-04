@@ -5,9 +5,21 @@ import Dashboard from './pages/Dashboard.jsx'
 import CreateComplaint from './pages/CreateComplaint.jsx'
 import AdminDashboard from './pages/AdminDashboard.jsx'
 import ComplaintDetails from './pages/ComplaintDetails.jsx'
+import { getDemoSession } from './data/demoAuth.js'
 
 function App() {
   const currentPath = window.location.pathname.replace(/\/+$/, '')
+  const session = getDemoSession()
+
+  if (currentPath === '/dashboard' && session?.role !== 'citizen') {
+    window.location.replace('/login')
+    return null
+  }
+
+  if (currentPath === '/admin' && session?.role !== 'admin') {
+    window.location.replace('/login')
+    return null
+  }
 
   if (currentPath === '/complaints/new') {
     return <CreateComplaint />

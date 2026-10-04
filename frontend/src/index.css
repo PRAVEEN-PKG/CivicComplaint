@@ -1472,6 +1472,30 @@ button {
   line-height: 1.5;
 }
 
+.login-notice-error {
+  margin-top: -10px;
+  color: #a34e45;
+}
+
+.login-demo-credentials {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid #edf0eb;
+  border-radius: 6px;
+  color: #829087;
+  background: #fbfcfa;
+  font-size: 8px;
+  line-height: 1.5;
+}
+
+.login-demo-credentials strong {
+  color: #62766a;
+  font-size: 8px;
+  font-weight: 700;
+}
+
 .login-signup {
   margin: 24px 0 0;
   color: #718093;
@@ -7707,4 +7731,35 @@ button {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+}
+
+.admin-status.status-submitted,
+.admin-status.status-under-review {
+  border-color: #efe5d2;
+  color: #8e713e;
+  background: #fcf8ef;
+}
+
+.admin-status.status-submitted i,
+.admin-status.status-under-review i {
+  background: #bc984f;
+}
+
+.admin-save-changes {
+  min-height: 36px;
+  margin-top: 12px;
+  padding: 0 13px;
+  border: 1px solid #286d5d;
+  border-radius: 6px;
+  color: white;
+  background: #286d5d;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.admin-save-changes:hover {
+  transform: translateY(-1px);
+  background: #20594c;
 }

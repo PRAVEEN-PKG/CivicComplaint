@@ -1,138 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
+import {
+  ComplaintStorageError,
+  formatComplaintDate,
+  updateComplaint as saveComplaint,
+  useComplaints,
+} from '../data/complaints.js'
+import { logoutDemoUser } from '../data/demoAuth.js'
 
-const initialComplaints = [
-  {
-    id: 'CC-2026-00124',
-    title: 'Large pothole near Main Road',
-    description: 'A deep pothole has formed near the Main Road crossing and is creating a hazard for people driving and cycling through the area.',
-    category: 'Road Damage',
-    location: 'Main Road',
-    priority: 'High',
-    status: 'Pending',
-    department: 'Roads & Infrastructure',
-    worker: 'Unassigned',
-    date: '2026-10-04',
-    submitted: 'Oct 4, 2026',
-    activity: [
-      { label: 'Complaint submitted', date: 'Oct 4, 2026 · 9:42 AM', done: true },
-      { label: 'Awaiting initial review', date: 'Current status', done: false },
-    ],
-  },
-  {
-    id: 'CC-2026-00123',
-    title: 'Streetlight not working',
-    description: 'The streetlight outside the community park has been out for several nights, leaving the walkway difficult to see after dark.',
-    category: 'Streetlight',
-    location: 'Sector 4',
-    priority: 'Medium',
-    status: 'In Progress',
-    department: 'Electrical',
-    worker: 'Arun Mehta',
-    date: '2026-10-03',
-    submitted: 'Oct 3, 2026',
-    activity: [
-      { label: 'Complaint submitted', date: 'Oct 3, 2026 · 6:10 PM', done: true },
-      { label: 'Assigned to Electrical', date: 'Oct 4, 2026 · 8:15 AM', done: true },
-      { label: 'Repair in progress', date: 'Current status', done: false },
-    ],
-  },
-  {
-    id: 'CC-2026-00122',
-    title: 'Garbage accumulation',
-    description: 'Waste has accumulated at the market collection point and needs a scheduled pickup and cleanup.',
-    category: 'Garbage & Waste',
-    location: 'Market Area',
-    priority: 'High',
-    status: 'Resolved',
-    department: 'Sanitation',
-    worker: 'Nisha Rao',
-    date: '2026-10-02',
-    submitted: 'Oct 2, 2026',
-    activity: [
-      { label: 'Complaint submitted', date: 'Oct 2, 2026 · 10:30 AM', done: true },
-      { label: 'Cleanup team assigned', date: 'Oct 2, 2026 · 12:05 PM', done: true },
-      { label: 'Issue resolved', date: 'Oct 3, 2026 · 4:20 PM', done: true },
-    ],
-  },
-  {
-    id: 'CC-2026-00121',
-    title: 'Water leakage',
-    description: 'Water is continuously leaking from a roadside pipe, creating a slippery surface and wasting clean water.',
-    category: 'Water Leakage',
-    location: 'Station Road',
-    priority: 'Critical',
-    status: 'In Progress',
-    department: 'Water Supply',
-    worker: 'Imran Khan',
-    date: '2026-10-01',
-    submitted: 'Oct 1, 2026',
-    activity: [
-      { label: 'Complaint submitted', date: 'Oct 1, 2026 · 1:18 PM', done: true },
-      { label: 'Urgent repair assigned', date: 'Oct 1, 2026 · 2:05 PM', done: true },
-      { label: 'Repair in progress', date: 'Current status', done: false },
-    ],
-  },
-  {
-    id: 'CC-2026-00120',
-    title: 'Blocked drainage',
-    description: 'A blocked drain is causing water to collect along the footpath near the ward office.',
-    category: 'Drainage',
-    location: 'Ward 12',
-    priority: 'Medium',
-    status: 'Pending',
-    department: 'Roads & Infrastructure',
-    worker: 'Unassigned',
-    date: '2026-09-30',
-    submitted: 'Sep 30, 2026',
-    activity: [
-      { label: 'Complaint submitted', date: 'Sep 30, 2026 · 11:36 AM', done: true },
-      { label: 'Awaiting initial review', date: 'Current status', done: false },
-    ],
-  },
-  {
-    id: 'CC-2026-00119',
-    title: 'Damaged pedestrian crossing sign',
-    description: 'The crossing sign near the school entrance is damaged and is difficult for drivers to read.',
-    category: 'Public Safety',
-    location: 'Oak Street',
-    priority: 'Low',
-    status: 'Reopened',
-    department: 'Public Safety',
-    worker: 'Sara Patel',
-    date: '2026-09-29',
-    submitted: 'Sep 29, 2026',
-    activity: [
-      { label: 'Complaint submitted', date: 'Sep 29, 2026 · 8:24 AM', done: true },
-      { label: 'Repair marked complete', date: 'Oct 2, 2026 · 3:50 PM', done: true },
-      { label: 'Issue reopened for follow-up', date: 'Oct 4, 2026 · 9:10 AM', done: false },
-    ],
-  },
-  {
-    id: 'CC-2026-00118',
-    title: 'Damaged sidewalk curb',
-    description: 'A section of the curb has broken away near the community garden, making the sidewalk uneven.',
-    category: 'Road Damage',
-    location: 'Willow Lane',
-    priority: 'Low',
-    status: 'Resolved',
-    department: 'Roads & Infrastructure',
-    worker: 'Dev Shah',
-    date: '2026-09-20',
-    submitted: 'Sep 20, 2026',
-    activity: [
-      { label: 'Complaint submitted', date: 'Sep 20, 2026 · 2:11 PM', done: true },
-      { label: 'Repair team assigned', date: 'Sep 21, 2026 · 9:00 AM', done: true },
-      { label: 'Issue resolved', date: 'Sep 23, 2026 · 11:45 AM', done: true },
-    ],
-  },
-]
-
-const departments = [
-  { name: 'Roads & Infrastructure', assigned: 286, resolved: 182, pending: 42 },
-  { name: 'Sanitation', assigned: 241, resolved: 169, pending: 28 },
-  { name: 'Water Supply', assigned: 198, resolved: 131, pending: 31 },
-  { name: 'Electrical', assigned: 173, resolved: 112, pending: 24 },
-  { name: 'Public Safety', assigned: 126, resolved: 89, pending: 19 },
+const departmentNames = [
+  'Roads & Infrastructure',
+  'Sanitation',
+  'Water Supply',
+  'Electrical',
+  'Public Safety',
 ]
 
 const departmentOptions = [
@@ -141,10 +21,11 @@ const departmentOptions = [
   'Water Supply',
   'Electrical',
   'Public Safety',
+  'Citizen Service Desk',
 ]
 
-const workerOptions = ['Unassigned', 'Arun Mehta', 'Nisha Rao', 'Imran Khan', 'Sara Patel', 'Dev Shah']
-const statusOptions = ['Pending', 'In Progress', 'Resolved', 'Reopened']
+const workerOptions = ['Unassigned', 'Arun Mehta', 'Nisha Rao', 'Imran Khan', 'Sara Patel', 'Dev Shah', 'Ravi Kumar']
+const statusOptions = ['Submitted', 'Under Review', 'In Progress', 'Resolved', 'Reopened']
 const priorityOptions = ['Low', 'Medium', 'High', 'Critical']
 
 const stats = [
@@ -202,14 +83,13 @@ const stats = [
   },
 ]
 
-const statusDistribution = [
-  { name: 'Pending', count: 186, percent: 15, kind: 'pending' },
-  { name: 'In Progress', count: 312, percent: 25, kind: 'progress' },
-  { name: 'Resolved', count: 726, percent: 58, kind: 'resolved' },
-  { name: 'Reopened', count: 24, percent: 2, kind: 'reopened' },
-]
+const categoryOptions = ['Road Damage', 'Streetlight', 'Garbage & Waste', 'Water Leakage', 'Traffic Signal', 'Drainage', 'Public Safety', 'Other']
 
-const categoryOptions = ['Road Damage', 'Streetlight', 'Garbage & Waste', 'Water Leakage', 'Drainage', 'Public Safety']
+function departmentProgress(department) {
+  return department.assigned
+    ? Math.round((department.resolved / department.assigned) * 100)
+    : 0
+}
 
 function AdminBrand() {
   return (
@@ -243,20 +123,61 @@ function AdminIcon({ name }) {
 }
 
 function AdminDashboard() {
-  const [complaints, setComplaints] = useState(initialComplaints)
+  const complaints = useComplaints()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All statuses')
   const [categoryFilter, setCategoryFilter] = useState('All categories')
   const [priorityFilter, setPriorityFilter] = useState('All priorities')
   const [dateFilter, setDateFilter] = useState('All dates')
   const [selectedId, setSelectedId] = useState(null)
+  const [draft, setDraft] = useState(null)
   const [toast, setToast] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [noticeOpen, setNoticeOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const dialogRef = useRef(null)
 
+  function handleLogout(event) {
+    event.preventDefault()
+    logoutDemoUser()
+    window.location.href = '/login'
+  }
+
   const selectedComplaint = complaints.find((complaint) => complaint.id === selectedId)
+  const statusDistribution = [
+    {
+      name: 'Pending',
+      count: complaints.filter((complaint) => ['Submitted', 'Under Review'].includes(complaint.status)).length,
+      kind: 'pending',
+    },
+    {
+      name: 'In Progress',
+      count: complaints.filter((complaint) => complaint.status === 'In Progress').length,
+      kind: 'progress',
+    },
+    {
+      name: 'Resolved',
+      count: complaints.filter((complaint) => complaint.status === 'Resolved').length,
+      kind: 'resolved',
+    },
+    {
+      name: 'Reopened',
+      count: complaints.filter((complaint) => complaint.status === 'Reopened').length,
+      kind: 'reopened',
+    },
+  ].map((item) => ({
+    ...item,
+    percent: complaints.length ? Math.round((item.count / complaints.length) * 100) : 0,
+  }))
+  const departments = departmentNames.map((name) => {
+    const assignedComplaints = complaints.filter((complaint) => complaint.department === name)
+    return {
+      name,
+      assigned: assignedComplaints.length,
+      resolved: assignedComplaints.filter((complaint) => complaint.status === 'Resolved').length,
+      pending: assignedComplaints.filter((complaint) => ['Submitted', 'Under Review', 'Reopened'].includes(complaint.status)).length,
+    }
+  })
   const filteredComplaints = complaints.filter((complaint) => {
     const normalizedSearch = search.trim().toLowerCase()
     const matchesSearch = !normalizedSearch || [
@@ -269,8 +190,8 @@ function AdminDashboard() {
     const matchesCategory = categoryFilter === 'All categories' || complaint.category === categoryFilter
     const matchesPriority = priorityFilter === 'All priorities' || complaint.priority === priorityFilter
     const matchesDate = dateFilter === 'All dates'
-      || (dateFilter === 'Last 7 days' && complaint.date >= '2026-09-28')
-      || (dateFilter === 'Last 30 days' && complaint.date >= '2026-09-05')
+      || (dateFilter === 'Last 7 days' && complaint.submittedAt.slice(0, 10) >= '2026-09-28')
+      || (dateFilter === 'Last 30 days' && complaint.submittedAt.slice(0, 10) >= '2026-09-05')
 
     return matchesSearch && matchesStatus && matchesCategory && matchesPriority && matchesDate
   })
@@ -288,10 +209,14 @@ function AdminDashboard() {
     return () => document.removeEventListener('keydown', closeOnEscape)
   }, [selectedComplaint])
 
-  function updateComplaint(id, changes) {
-    setComplaints((current) => current.map((complaint) => (
-      complaint.id === id ? { ...complaint, ...changes } : complaint
-    )))
+  function openComplaint(complaint) {
+    setSelectedId(complaint.id)
+    setDraft({
+      status: complaint.status,
+      priority: complaint.priority,
+      department: complaint.department,
+      assignedWorker: complaint.assignedWorker,
+    })
   }
 
   function showToast(message) {
@@ -300,28 +225,42 @@ function AdminDashboard() {
   }
 
   function reviewPending() {
-    setStatusFilter('Pending')
+    setStatusFilter('Submitted')
     document.getElementById('admin-complaints')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   function assignUnassigned() {
-    const unassigned = complaints.filter((complaint) => complaint.worker === 'Unassigned')
+    const unassigned = complaints.filter((complaint) => complaint.assignedWorker === 'Unassigned')
     if (!unassigned.length) {
       showToast('All demo complaints are already assigned.')
       return
     }
 
     const workers = workerOptions.filter((worker) => worker !== 'Unassigned')
-    setComplaints((current) => {
-      let index = 0
-      return current.map((complaint) => {
-        if (complaint.worker !== 'Unassigned') return complaint
-        const worker = workers[index % workers.length]
-        index += 1
-        return { ...complaint, worker }
-      })
+    unassigned.forEach((complaint, index) => {
+      saveComplaint(complaint.id, { assignedWorker: workers[index % workers.length] })
     })
     showToast(`${unassigned.length} demo complaint${unassigned.length > 1 ? 's' : ''} assigned locally.`)
+  }
+
+  function saveChanges() {
+    if (!selectedComplaint || !draft) return
+    const statusChanged = draft.status !== selectedComplaint.status
+    let saved
+    try {
+      saved = saveComplaint(selectedComplaint.id, draft)
+    } catch (error) {
+      if (!(error instanceof ComplaintStorageError)) throw error
+      showToast('Changes could not be saved. Check browser storage and try again.')
+      return
+    }
+    if (!saved) {
+      showToast('This complaint could not be found. Refresh the complaint list and try again.')
+      return
+    }
+    showToast(statusChanged
+      ? 'Complaint status updated successfully.'
+      : 'Complaint details updated successfully.')
   }
 
   const navItems = [
@@ -397,7 +336,7 @@ function AdminDashboard() {
                 <div className="admin-profile-popover">
                   <strong>Admin Desk</strong>
                   <span>City Administrator</span>
-                  <a href="/login">Sign out</a>
+                  <a href="/login" onClick={handleLogout}>Sign out</a>
                 </div>
               )}
             </div>
@@ -623,14 +562,14 @@ function AdminDashboard() {
                               <i aria-hidden="true" />{complaint.status}
                             </span>
                           </td>
-                          <td data-label="Assigned To">{complaint.worker}</td>
-                          <td data-label="Date">{complaint.submitted}</td>
+                          <td data-label="Assigned To">{complaint.assignedWorker}</td>
+                          <td data-label="Date">{formatComplaintDate(complaint.submittedAt)}</td>
                           <td data-label="Action">
                             <button
                               className="admin-view-button"
                               type="button"
                               aria-label={`View complaint ${complaint.id}`}
-                              onClick={() => setSelectedId(complaint.id)}
+                              onClick={() => openComplaint(complaint)}
                             >
                               View <span aria-hidden="true">↗</span>
                             </button>
@@ -684,16 +623,16 @@ function AdminDashboard() {
                     </div>
                     <div className="admin-department-progress">
                       <span>Resolution progress</span>
-                      <strong>{Math.round((department.resolved / department.assigned) * 100)}%</strong>
+                      <strong>{departmentProgress(department)}%</strong>
                       <div
                         className="admin-progress-track"
                         role="progressbar"
                         aria-label={`${department.name} resolution progress`}
-                        aria-valuenow={Math.round((department.resolved / department.assigned) * 100)}
+                        aria-valuenow={departmentProgress(department)}
                         aria-valuemin="0"
                         aria-valuemax="100"
                       >
-                        <span style={{ width: `${Math.round((department.resolved / department.assigned) * 100)}%` }} />
+                        <span style={{ width: `${departmentProgress(department)}%` }} />
                       </div>
                     </div>
                     <div className="admin-department-metrics">
@@ -766,9 +705,9 @@ function AdminDashboard() {
             <dl className="admin-detail-facts">
               <div><dt>Category</dt><dd>{selectedComplaint.category}</dd></div>
               <div><dt>Location</dt><dd>{selectedComplaint.location}</dd></div>
-              <div><dt>Submitted</dt><dd>{selectedComplaint.submitted}</dd></div>
+              <div><dt>Submitted</dt><dd>{formatComplaintDate(selectedComplaint.submittedAt)}</dd></div>
               <div><dt>Assigned department</dt><dd>{selectedComplaint.department}</dd></div>
-              <div><dt>Assigned worker</dt><dd>{selectedComplaint.worker}</dd></div>
+              <div><dt>Assigned worker</dt><dd>{selectedComplaint.assignedWorker}</dd></div>
             </dl>
 
             <section className="admin-detail-controls" aria-label="Update complaint">
@@ -777,8 +716,8 @@ function AdminDashboard() {
                 <label>
                   Change Status
                   <select
-                    value={selectedComplaint.status}
-                    onChange={(event) => updateComplaint(selectedComplaint.id, { status: event.target.value })}
+                    value={draft.status}
+                    onChange={(event) => setDraft((current) => ({ ...current, status: event.target.value }))}
                   >
                     {statusOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
@@ -786,8 +725,8 @@ function AdminDashboard() {
                 <label>
                   Change Priority
                   <select
-                    value={selectedComplaint.priority}
-                    onChange={(event) => updateComplaint(selectedComplaint.id, { priority: event.target.value })}
+                    value={draft.priority}
+                    onChange={(event) => setDraft((current) => ({ ...current, priority: event.target.value }))}
                   >
                     {priorityOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
@@ -795,8 +734,8 @@ function AdminDashboard() {
                 <label>
                   Assign Department
                   <select
-                    value={selectedComplaint.department}
-                    onChange={(event) => updateComplaint(selectedComplaint.id, { department: event.target.value })}
+                    value={draft.department}
+                    onChange={(event) => setDraft((current) => ({ ...current, department: event.target.value }))}
                   >
                     {departmentOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
@@ -804,23 +743,32 @@ function AdminDashboard() {
                 <label>
                   Assign Worker
                   <select
-                    value={selectedComplaint.worker}
-                    onChange={(event) => updateComplaint(selectedComplaint.id, { worker: event.target.value })}
+                    value={draft.assignedWorker}
+                    onChange={(event) => setDraft((current) => ({ ...current, assignedWorker: event.target.value }))}
                   >
                     {workerOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
                 </label>
               </div>
-              <p>Changes are saved in this page only and are not sent to a server.</p>
+              <p>Changes are saved to this browser for the current demo session.</p>
+              <button className="admin-save-changes" type="button" onClick={saveChanges}>
+                Save changes
+              </button>
             </section>
 
             <section className="admin-timeline" aria-labelledby="admin-timeline-title">
               <h3 id="admin-timeline-title">Activity</h3>
               <ol>
-                {selectedComplaint.activity.map((event) => (
-                  <li className={event.done ? 'timeline-done' : 'timeline-current'} key={`${event.label}-${event.date}`}>
-                    <span className="admin-timeline-marker" aria-hidden="true">{event.done ? '✓' : ''}</span>
-                    <span><strong>{event.label}</strong><small>{event.date}</small></span>
+                {[...selectedComplaint.updates]
+                  .sort((first, second) => second.timestamp.localeCompare(first.timestamp))
+                  .map((event, index) => (
+                  <li className={index === 0 ? 'timeline-current' : 'timeline-done'} key={event.id}>
+                    <span className="admin-timeline-marker" aria-hidden="true">{index === 0 ? '' : '✓'}</span>
+                    <span>
+                      <strong>{event.title}</strong>
+                      <small>{formatComplaintDate(event.timestamp)}</small>
+                      {event.department && <small>{event.department}</small>}
+                    </span>
                   </li>
                 ))}
               </ol>

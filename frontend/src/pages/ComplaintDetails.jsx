@@ -1,133 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-
-const complaintRecords = {
-  'CC-2026-00124': {
-    id: 'CC-2026-00124',
-    title: 'Large pothole near Main Road',
-    category: 'Road Damage',
-    submitted: 'Oct 2, 2026 · 9:42 AM',
-    location: 'Main Road, Sector 5',
-    status: 'In Progress',
-    priority: 'High',
-    description: 'A deep pothole has formed near the Main Road crossing and is creating a hazard for people driving and cycling through the area. It becomes difficult to see after sunset.',
-    department: 'Roads & Infrastructure',
-    worker: 'Ravi Kumar · Field response team',
-    eta: 'Estimated resolution: Oct 6–8, 2026',
-    photo: true,
-    timeline: [
-      { title: 'Complaint Submitted', date: 'Oct 2 · 9:42 AM', description: 'Your report was received and added to the city service queue.', state: 'complete' },
-      { title: 'Under Review', date: 'Oct 2 · 11:15 AM', description: 'The municipal team verified the location and issue details.', state: 'complete' },
-      { title: 'Assigned / In Progress', date: 'Oct 3 · 8:30 AM', description: 'A road inspection and repair crew has been assigned.', department: 'Roads & Infrastructure', state: 'current' },
-      { title: 'Resolved', date: 'Awaiting completion', description: 'We will let you know when the repair is complete.', state: 'upcoming' },
-    ],
-    updates: [
-      { title: 'Work in progress', date: 'Oct 4, 2026 · 8:30 AM', description: 'The field crew has inspected the site and scheduled the surface repair.', department: 'Roads & Infrastructure', kind: 'work' },
-      { title: 'Assigned to Roads & Infrastructure Department', date: 'Oct 3, 2026 · 8:30 AM', description: 'Your complaint was assigned to the road maintenance team.', department: 'Roads & Infrastructure', kind: 'assigned' },
-      { title: 'Complaint reviewed by municipal team', date: 'Oct 2, 2026 · 11:15 AM', description: 'The submitted details were checked and confirmed for follow-up.', department: 'Citizen Service Desk', kind: 'review' },
-      { title: 'Complaint submitted successfully', date: 'Oct 2, 2026 · 9:42 AM', description: 'Your report was recorded and is now visible to the service team.', department: '', kind: 'submitted' },
-    ],
-  },
-  'CC-2026-00123': {
-    id: 'CC-2026-00123',
-    title: 'Streetlight not working',
-    category: 'Streetlight',
-    submitted: 'Oct 1, 2026 · 6:10 PM',
-    location: 'Park Avenue, Sector 4',
-    status: 'Pending',
-    priority: 'Medium',
-    description: 'The streetlight outside the community park has been out for several nights, leaving the walkway difficult to see after dark.',
-    department: 'Electrical',
-    worker: 'Awaiting assignment',
-    eta: 'The electrical team will provide an estimate after initial review.',
-    photo: false,
-    timeline: [
-      { title: 'Complaint Submitted', date: 'Oct 1 · 6:10 PM', description: 'Your report was received and added to the city service queue.', state: 'complete' },
-      { title: 'Under Review', date: 'Oct 2 · 9:20 AM', description: 'The municipal team is reviewing the issue details.', state: 'current' },
-      { title: 'Assigned / In Progress', date: 'Upcoming', description: 'The electrical team will be assigned after review.', department: 'Electrical', state: 'upcoming' },
-      { title: 'Resolved', date: 'Awaiting completion', description: 'We will let you know when the streetlight is working again.', state: 'upcoming' },
-    ],
-    updates: [
-      { title: 'Complaint reviewed by municipal team', date: 'Oct 2, 2026 · 9:20 AM', description: 'Your report is being checked by the local service desk.', department: 'Citizen Service Desk', kind: 'review' },
-      { title: 'Complaint submitted successfully', date: 'Oct 1, 2026 · 6:10 PM', description: 'Your report was recorded and is awaiting review.', department: '', kind: 'submitted' },
-    ],
-  },
-  'CC-2026-00122': {
-    id: 'CC-2026-00122',
-    title: 'Garbage collection issue',
-    category: 'Garbage & Waste',
-    submitted: 'Sep 27, 2026 · 10:30 AM',
-    location: 'Green Park Market Area',
-    status: 'Resolved',
-    priority: 'High',
-    description: 'Waste had accumulated at the market collection point. The collection area needed a scheduled pickup and a thorough cleanup.',
-    department: 'Sanitation',
-    worker: 'Nisha Rao · Neighborhood sanitation team',
-    eta: 'Resolved Oct 1, 2026',
-    photo: false,
-    timeline: [
-      { title: 'Complaint Submitted', date: 'Sep 27 · 10:30 AM', description: 'Your report was received and added to the city service queue.', state: 'complete' },
-      { title: 'Under Review', date: 'Sep 27 · 12:05 PM', description: 'The issue was verified and sent to the sanitation team.', state: 'complete' },
-      { title: 'Assigned / In Progress', date: 'Sep 28 · 8:40 AM', description: 'A neighborhood cleanup team was scheduled.', department: 'Sanitation', state: 'complete' },
-      { title: 'Resolved', date: 'Oct 1 · 4:20 PM', description: 'The collection point was cleared and the pickup schedule confirmed.', state: 'complete' },
-    ],
-    updates: [
-      { title: 'Resolution submitted', date: 'Oct 1, 2026 · 4:20 PM', description: 'The team cleared the area and confirmed the next scheduled collection.', department: 'Sanitation', kind: 'resolved' },
-      { title: 'Field worker assigned', date: 'Sep 28, 2026 · 8:40 AM', description: 'Nisha Rao and the neighborhood team were assigned to the cleanup.', department: 'Sanitation', kind: 'assigned' },
-      { title: 'Complaint reviewed by municipal team', date: 'Sep 27, 2026 · 12:05 PM', description: 'The collection point was verified for service.', department: 'Citizen Service Desk', kind: 'review' },
-      { title: 'Complaint submitted successfully', date: 'Sep 27, 2026 · 10:30 AM', description: 'Your report was recorded for review.', department: '', kind: 'submitted' },
-    ],
-  },
-  'CC-2026-00121': {
-    id: 'CC-2026-00121',
-    title: 'Water leakage on road',
-    category: 'Water Leakage',
-    submitted: 'Sep 27, 2026 · 1:18 PM',
-    location: 'Station Road',
-    status: 'In Progress',
-    priority: 'Critical',
-    description: 'Water is continuously leaking from a roadside pipe, creating a slippery surface and wasting clean water near the station entrance.',
-    department: 'Water Supply',
-    worker: 'Imran Khan · Emergency repair crew',
-    eta: 'Estimated resolution: Oct 5, 2026',
-    photo: false,
-    timeline: [
-      { title: 'Complaint Submitted', date: 'Sep 27 · 1:18 PM', description: 'Your report was received and added to the city service queue.', state: 'complete' },
-      { title: 'Under Review', date: 'Sep 27 · 1:45 PM', description: 'The water service desk confirmed an active leak.', state: 'complete' },
-      { title: 'Assigned / In Progress', date: 'Sep 27 · 2:05 PM', description: 'An urgent repair crew is working to isolate the leak.', department: 'Water Supply', state: 'current' },
-      { title: 'Resolved', date: 'Awaiting completion', description: 'The repair team will confirm when the leak is stopped.', state: 'upcoming' },
-    ],
-    updates: [
-      { title: 'Work in progress', date: 'Oct 4, 2026 · 10:00 AM', description: 'The repair team is replacing a damaged pipe section.', department: 'Water Supply', kind: 'work' },
-      { title: 'Field worker assigned', date: 'Sep 27, 2026 · 2:05 PM', description: 'An emergency repair crew was dispatched to the location.', department: 'Water Supply', kind: 'assigned' },
-      { title: 'Complaint reviewed by municipal team', date: 'Sep 27, 2026 · 1:45 PM', description: 'The active leak was confirmed and marked urgent.', department: 'Water Supply', kind: 'review' },
-      { title: 'Complaint submitted successfully', date: 'Sep 27, 2026 · 1:18 PM', description: 'Your report was recorded and sent for urgent review.', department: '', kind: 'submitted' },
-    ],
-  },
-  'CC-2026-00125': {
-    id: 'CC-2026-00125',
-    title: 'Blocked storm drain after rainfall',
-    category: 'Drainage',
-    submitted: 'Oct 3, 2026 · 7:25 AM',
-    location: 'Cedar Street, Ward 8',
-    status: 'Under Review',
-    priority: 'Medium',
-    description: 'Rainwater is pooling beside the crosswalk because the storm drain appears to be blocked with leaves and debris.',
-    department: 'Roads & Infrastructure',
-    worker: 'Awaiting assignment',
-    eta: 'A response estimate will be shared after inspection.',
-    photo: true,
-    timeline: [
-      { title: 'Complaint Submitted', date: 'Oct 3 · 7:25 AM', description: 'Your report was received and added to the city service queue.', state: 'complete' },
-      { title: 'Under Review', date: 'Oct 3 · 9:10 AM', description: 'The service desk is confirming the location and drainage details.', state: 'current' },
-      { title: 'Assigned / In Progress', date: 'Upcoming', description: 'A field team will be assigned following review.', department: 'Roads & Infrastructure', state: 'upcoming' },
-      { title: 'Resolved', date: 'Awaiting completion', description: 'We will update you when the drain is clear.', state: 'upcoming' },
-    ],
-    updates: [
-      { title: 'Complaint reviewed by municipal team', date: 'Oct 3, 2026 · 9:10 AM', description: 'The service desk is checking the reported location.', department: 'Citizen Service Desk', kind: 'review' },
-      { title: 'Complaint submitted successfully', date: 'Oct 3, 2026 · 7:25 AM', description: 'Your report was recorded for review.', department: '', kind: 'submitted' },
-    ],
-  },
-}
+import {
+  ComplaintStorageError,
+  formatComplaintDate,
+  updateComplaint,
+  useComplaints,
+} from '../data/complaints.js'
 
 function ComplaintDetailsBrand() {
   return (
@@ -177,8 +54,43 @@ function ComplaintPhoto() {
   )
 }
 
+function complaintProgress(complaint) {
+  const stageStatuses = ['Submitted', 'Under Review', 'In Progress', 'Resolved']
+  const activeIndex = complaint.status === 'Reopened'
+    ? 1
+    : Math.max(0, stageStatuses.indexOf(complaint.status))
+  const sortedUpdates = [...complaint.updates].sort(
+    (first, second) => second.timestamp.localeCompare(first.timestamp),
+  )
+
+  return stageStatuses.map((status, index) => {
+    const matchingUpdate = sortedUpdates.find((update) => update.status === status)
+    const current = index === activeIndex
+    return {
+      title: status === 'In Progress' ? 'Assigned / In Progress' : status,
+      date: index > activeIndex
+        ? 'Awaiting update'
+        : matchingUpdate
+          ? formatComplaintDate(matchingUpdate.timestamp)
+          : formatComplaintDate(complaint.submittedAt),
+      description: current
+        ? `Current status: ${complaint.status}. ${complaint.description}`
+        : status === 'Submitted'
+          ? 'Your report was received and added to the city service queue.'
+          : status === 'Under Review'
+            ? 'The municipal team is checking the report details.'
+            : status === 'In Progress'
+              ? 'The assigned service team is working on the reported issue.'
+              : 'The service team has completed the reported work.',
+      department: status === 'In Progress' && index <= activeIndex ? complaint.department : '',
+      state: index < activeIndex ? 'complete' : current ? 'current' : 'upcoming',
+    }
+  })
+}
+
 function ComplaintDetails({ complaintId }) {
-  const [complaint, setComplaint] = useState(() => complaintRecords[complaintId] || null)
+  const complaints = useComplaints()
+  const complaint = complaints.find((item) => item.id === complaintId) || null
   const [notice, setNotice] = useState('')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [supportOpen, setSupportOpen] = useState(false)
@@ -204,7 +116,7 @@ function ComplaintDetails({ complaintId }) {
       `Status: ${complaint.status}`,
       `Priority: ${complaint.priority}`,
       `Location: ${complaint.location}`,
-      `Submitted: ${complaint.submitted}`,
+      `Submitted: ${formatComplaintDate(complaint.submittedAt)}`,
       `Department: ${complaint.department}`,
       '',
       complaint.description,
@@ -219,26 +131,13 @@ function ComplaintDetails({ complaintId }) {
   }
 
   function reopenComplaint() {
-    setComplaint((current) => ({
-      ...current,
-      status: 'Reopened',
-      timeline: current.timeline.map((stage, index) => ({
-        ...stage,
-        state: index === 0 ? 'complete' : index === 1 ? 'current' : 'upcoming',
-        date: index === 1 ? 'Just now · Reopened for follow-up' : stage.date,
-      })),
-      updates: [
-        {
-          title: 'Complaint reopened for follow-up',
-          date: 'Just now',
-          description: 'Your request to revisit this resolved issue was recorded locally.',
-          department: 'Citizen Service Desk',
-          kind: 'review',
-        },
-        ...current.updates,
-      ],
-    }))
-    setNotice('Complaint reopened for follow-up. This demo update is only stored on this page.')
+    try {
+      const updated = updateComplaint(complaint.id, { status: 'Reopened' })
+      if (updated) setNotice('Complaint reopened for follow-up. The update is saved in this browser.')
+    } catch (error) {
+      if (!(error instanceof ComplaintStorageError)) throw error
+      setNotice('The complaint could not be reopened because browser storage is unavailable. Please try again.')
+    }
   }
 
   if (!complaint) {
@@ -261,13 +160,10 @@ function ComplaintDetails({ complaintId }) {
     )
   }
 
-  const currentStage = complaint.status === 'Resolved'
-    ? 3
-    : complaint.status === 'In Progress'
-      ? 2
-      : complaint.status === 'Under Review' || complaint.status === 'Reopened'
-        ? 1
-        : 1
+  const timeline = complaintProgress(complaint)
+  const updates = [...complaint.updates].sort(
+    (first, second) => second.timestamp.localeCompare(first.timestamp),
+  )
 
   return (
     <div className="dashboard-page complaint-details-page">
@@ -320,8 +216,8 @@ function ComplaintDetails({ complaintId }) {
                 <span className="details-updated-label"><span aria-hidden="true" /> Updates as work progresses</span>
               </div>
               <ol className="details-progress-track">
-                {complaint.timeline.map((stage, index) => {
-                  const state = stage.state === 'complete' ? 'complete' : index === currentStage ? 'current' : stage.state
+                {timeline.map((stage, index) => {
+                  const state = stage.state
                   return (
                     <li className={`details-progress-step step-${state}`} key={stage.title}>
                       <span className="details-progress-marker" aria-hidden="true">
@@ -357,7 +253,7 @@ function ComplaintDetails({ complaintId }) {
                 </div>
                 <div>
                   <span>Submitted</span>
-                  <strong>{complaint.submitted}</strong>
+                  <strong>{formatComplaintDate(complaint.submittedAt)}</strong>
                 </div>
                 <div>
                   <span>Location</span>
@@ -373,10 +269,10 @@ function ComplaintDetails({ complaintId }) {
                 <p>{complaint.description}</p>
               </div>
 
-              {complaint.photo ? (
+              {complaint.image ? (
                 <div className="details-photo">
                   <ComplaintPhoto />
-                  <span><strong>Issue location photo</strong><small>Citizen-submitted reference image · Demo preview</small></span>
+                  <span><strong>Issue location photo</strong><small>{complaint.image.name} · Demo preview</small></span>
                 </div>
               ) : (
                 <div className="details-no-photo">
@@ -392,17 +288,17 @@ function ComplaintDetails({ complaintId }) {
                   <span className="dashboard-eyebrow">SERVICE ACTIVITY</span>
                   <h2 id="updates-title">Updates & activity</h2>
                 </div>
-                <span className="details-update-count">{complaint.updates.length} updates</span>
+                <span className="details-update-count">{updates.length} updates</span>
               </div>
               <ol className="details-activity-list">
-                {complaint.updates.map((update, index) => (
-                  <li className="details-activity-item" key={`${update.title}-${update.date}`}>
-                    <span className={`details-activity-icon activity-${update.kind}`} aria-hidden="true">
-                      {index === 0 && complaint.status === 'Resolved' ? '✓' : '•'}
+                {updates.map((update, index) => (
+                  <li className="details-activity-item" key={update.id}>
+                    <span className={`details-activity-icon activity-${update.status === 'Resolved' ? 'resolved' : 'review'}`} aria-hidden="true">
+                      {index === 0 && update.status === 'Resolved' ? '✓' : '•'}
                     </span>
                     <span className="details-activity-copy">
                       <strong>{update.title}</strong>
-                      <small>{update.date}</small>
+                      <small>{formatComplaintDate(update.timestamp)}</small>
                       <span>{update.description}</span>
                       {update.department && <em>{update.department}</em>}
                     </span>
@@ -422,16 +318,16 @@ function ComplaintDetails({ complaintId }) {
               <span className="dashboard-eyebrow">YOUR SERVICE TEAM</span>
               <h2 id="assignment-title">{complaint.department}</h2>
               <div className="details-assigned-worker">
-                <span className="details-worker-avatar" aria-hidden="true">{complaint.worker === 'Awaiting assignment' ? '—' : complaint.worker.split(' ').slice(0, 2).map((word) => word[0]).join('')}</span>
-                <span><strong>{complaint.worker}</strong><small>Assigned response team</small></span>
+                <span className="details-worker-avatar" aria-hidden="true">{complaint.assignedWorker === 'Unassigned' ? '—' : complaint.assignedWorker.split(' ').slice(0, 2).map((word) => word[0]).join('')}</span>
+                <span><strong>{complaint.assignedWorker}</strong><small>Assigned response team</small></span>
               </div>
               <div className="details-eta">
                 <span aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
                 </span>
-                <span><small>Resolution estimate</small><strong>{complaint.eta.replace('Estimated resolution: ', '').replace('Resolved ', '')}</strong></span>
+                <span><small>{complaint.status === 'Resolved' ? 'Resolved on' : 'Latest update'}</small><strong>{formatComplaintDate(updates[0].timestamp)}</strong></span>
               </div>
-              <p className="details-eta-note">{complaint.eta}</p>
+              <p className="details-eta-note">{complaint.status === 'Resolved' ? 'The assigned department has marked this report complete.' : `Current service team: ${complaint.department}.`}</p>
             </section>
 
             <section className="details-panel details-location-panel" aria-labelledby="location-title">

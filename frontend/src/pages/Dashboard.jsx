@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import { useComplaints } from '../data/complaints.js'
+import { logoutDemoUser } from '../data/demoAuth.js'
 
-const stats = [
+const statTemplates = [
   {
     label: 'Total Complaints',
-    value: '12',
     detail: 'Across your community',
     kind: 'total',
     icon: (
@@ -14,7 +15,6 @@ const stats = [
   },
   {
     label: 'Pending',
-    value: '4',
     detail: 'Awaiting review',
     kind: 'pending',
     icon: (
@@ -26,7 +26,6 @@ const stats = [
   },
   {
     label: 'In Progress',
-    value: '3',
     detail: 'Being worked on',
     kind: 'progress',
     icon: (
@@ -39,7 +38,6 @@ const stats = [
   },
   {
     label: 'Resolved',
-    value: '5',
     detail: 'Community improvements',
     kind: 'resolved',
     icon: (
@@ -51,66 +49,68 @@ const stats = [
   },
 ]
 
-const complaints = [
-  {
-    id: 'CC-2026-00124',
-    category: 'Pothole',
-    title: 'Large pothole near Main Road',
-    location: 'Main Road, Sector 5',
-    date: '2 days ago',
-    status: 'In Progress',
-    type: 'progress',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M3 17h18M5 17l2-7h10l2 7M8 10l1-4h6l1 4M4 20h2M18 20h2" />
-      </svg>
-    ),
-  },
-  {
-    id: 'CC-2026-00123',
-    category: 'Streetlight',
-    title: 'Streetlight not working',
-    location: 'Park Avenue',
-    date: '4 days ago',
-    status: 'Pending',
-    type: 'pending',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M12 3a5 5 0 0 0-3 9v3h6v-3a5 5 0 0 0-3-9ZM9 18h6M10 21h4" />
-        <path d="M12 1v1M4.2 4.2l1.4 1.4M19.8 4.2l-1.4 1.4" />
-      </svg>
-    ),
-  },
-  {
-    id: 'CC-2026-00122',
-    category: 'Garbage',
-    title: 'Garbage collection issue',
-    location: 'Green Park',
-    date: '1 week ago',
-    status: 'Resolved',
-    type: 'resolved',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M4 7h16M10 11v6M14 11v6M5 7l1 14h12l1-14M9 7V4h6v3" />
-      </svg>
-    ),
-  },
-  {
-    id: 'CC-2026-00121',
-    category: 'Water',
-    title: 'Water leakage on road',
-    location: 'Station Road',
-    date: '1 week ago',
-    status: 'Resolved',
-    type: 'resolved',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M12 3s6 7.1 6 11a6 6 0 0 1-12 0c0-3.9 6-11 6-11Z" />
-        <path d="M9 15a3 3 0 0 0 3 3" />
-      </svg>
-    ),
-  },
-]
+const complaintIcons = {
+  'Road Damage': (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M3 17h18M5 17l2-7h10l2 7M8 10l1-4h6l1 4M4 20h2M18 20h2" />
+    </svg>
+  ),
+  Streetlight: (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 3a5 5 0 0 0-3 9v3h6v-3a5 5 0 0 0-3-9ZM9 18h6M10 21h4" />
+      <path d="M12 1v1M4.2 4.2l1.4 1.4M19.8 4.2l-1.4 1.4" />
+    </svg>
+  ),
+  'Garbage & Waste': (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 7h16M10 11v6M14 11v6M5 7l1 14h12l1-14M9 7V4h6v3" />
+    </svg>
+  ),
+  'Water Leakage': (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 3s6 7.1 6 11a6 6 0 0 1-12 0c0-3.9 6-11 6-11Z" />
+      <path d="M9 15a3 3 0 0 0 3 3" />
+    </svg>
+  ),
+  Drainage: (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 8h16M6 12h12M8 16h8M10 20h4M12 3v3M9 4l3 3 3-3" />
+    </svg>
+  ),
+  'Public Safety': (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z" />
+      <path d="M12 8v4M12 16h.01" />
+    </svg>
+  ),
+  'Traffic Signal': (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M8 3h8v18H8zM12 7h.01M12 12h.01M12 17h.01" strokeWidth="2.5" />
+    </svg>
+  ),
+}
+
+function statusKind(status) {
+  if (status === 'Resolved') return 'resolved'
+  if (status === 'In Progress') return 'progress'
+  return 'pending'
+}
+
+function complaintDate(submittedAt) {
+  const elapsedDays = Math.floor((Date.now() - new Date(submittedAt).getTime()) / 86400000)
+  if (elapsedDays <= 0) return 'Today'
+  if (elapsedDays === 1) return '1 day ago'
+  if (elapsedDays < 7) return `${elapsedDays} days ago`
+  if (elapsedDays < 14) return '1 week ago'
+  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(submittedAt))
+}
+
+function categoryLabel(category) {
+  if (category === 'Road Damage') return 'Pothole / Road'
+  if (category === 'Garbage & Waste') return 'Garbage'
+  if (category === 'Water Leakage') return 'Water'
+  return category
+}
 
 const quickActions = [
   {
@@ -194,9 +194,25 @@ function ImpactIllustration() {
 
 function Dashboard() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const complaints = useComplaints()
+  const stats = statTemplates.map((stat) => {
+    const value = stat.kind === 'total'
+      ? complaints.length
+      : complaints.filter((complaint) => {
+        if (stat.kind === 'pending') return ['Submitted', 'Under Review', 'Reopened'].includes(complaint.status)
+        return complaint.status === (stat.kind === 'progress' ? 'In Progress' : 'Resolved')
+      }).length
+    return { ...stat, value: String(value) }
+  })
 
   function closeMenu() {
     setMenuOpen(false)
+  }
+
+  function handleLogout(event) {
+    event.preventDefault()
+    logoutDemoUser()
+    window.location.href = '/login'
   }
 
   return (
@@ -233,7 +249,7 @@ function Dashboard() {
               <span aria-hidden="true">+</span> Report Complaint
             </a>
             <a href="/login" onClick={closeMenu}>Profile</a>
-            <a className="dashboard-logout" href="/login" onClick={closeMenu}>Logout</a>
+            <a className="dashboard-logout" href="/login" onClick={handleLogout}>Logout</a>
           </div>
         </nav>
       </header>
@@ -298,12 +314,12 @@ function Dashboard() {
 
           <div className="dashboard-complaint-list">
             {complaints.map((complaint) => (
-              <article className="dashboard-complaint-card" key={complaint.title}>
-                <span className={`complaint-category-icon complaint-${complaint.type}`}>
-                  {complaint.icon}
+              <article className="dashboard-complaint-card" key={complaint.id}>
+                <span className={`complaint-category-icon complaint-${statusKind(complaint.status)}`}>
+                  {complaintIcons[complaint.category] || complaintIcons['Road Damage']}
                 </span>
                 <div className="complaint-main">
-                  <span className="complaint-category">{complaint.category}</span>
+                  <span className="complaint-category">{categoryLabel(complaint.category)}</span>
                   <h3>{complaint.title}</h3>
                   <p className="complaint-meta">
                     <span className="complaint-location">
@@ -314,10 +330,10 @@ function Dashboard() {
                       {complaint.location}
                     </span>
                     <span className="complaint-meta-dot" aria-hidden="true">·</span>
-                    <span>{complaint.date}</span>
+                    <span>{complaintDate(complaint.submittedAt)}</span>
                   </p>
                 </div>
-                <span className={`complaint-status status-${complaint.type}`}>
+                <span className={`complaint-status status-${statusKind(complaint.status)}`}>
                   <span className="status-indicator" aria-hidden="true" />
                   {complaint.status}
                 </span>
