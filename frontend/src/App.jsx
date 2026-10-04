@@ -7,9 +7,11 @@ import AdminDashboard from './pages/AdminDashboard.jsx'
 import ComplaintDetails from './pages/ComplaintDetails.jsx'
 import WorkerDashboard from './pages/WorkerDashboard.jsx'
 import { getDemoSession } from './data/demoAuth.js'
+import { Navigate, useLocation } from 'react-router-dom'
 
 function App() {
-  const currentPath = window.location.pathname.replace(/\/+$/, '')
+  const location = useLocation()
+  const currentPath = location.pathname.replace(/\/+$/, '')
   const session = getDemoSession()
 
   if (currentPath === '/dashboard' && session?.role !== 'citizen') {
@@ -54,6 +56,10 @@ function App() {
 
   if (currentPath === '/signup') {
     return <Signup />
+  }
+
+  if (currentPath === '') {
+    return <Navigate to="/login" replace />
   }
 
   return <LandingPage />
