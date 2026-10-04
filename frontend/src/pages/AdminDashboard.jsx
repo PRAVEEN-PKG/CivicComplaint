@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  ComplaintStorageError,
   formatComplaintDate,
   updateComplaint as saveComplaint,
   useComplaints,
@@ -16,6 +15,7 @@ const departmentNames = [
 ]
 
 const departmentOptions = [
+  'Unassigned',
   'Roads & Infrastructure',
   'Sanitation',
   'Water Supply',
@@ -123,7 +123,7 @@ function AdminIcon({ name }) {
 }
 
 function AdminDashboard() {
-  const complaints = useComplaints()
+  const { complaints, loading, error, refresh } = useComplaints()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All statuses')
   const [categoryFilter, setCategoryFilter] = useState('All categories')
@@ -229,38 +229,35 @@ function AdminDashboard() {
     document.getElementById('admin-complaints')?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  function assignUnassigned() {
+  async function assignUnassigned() {
     const unassigned = complaints.filter((complaint) => complaint.assignedWorker === 'Unassigned')
     if (!unassigned.length) {
-      showToast('All demo complaints are already assigned.')
+      showToast('All complaints are already assigned.')
       return
     }
 
     const workers = workerOptions.filter((worker) => worker !== 'Unassigned')
-    unassigned.forEach((complaint, index) => {
-      saveComplaint(complaint.id, { assignedWorker: workers[index % workers.length] })
-    })
-    showToast(`${unassigned.length} demo complaint${unassigned.length > 1 ? 's' : ''} assigned locally.`)
+    try {
+      for (const [index, complaint] of unassigned.entries()) {
+        await saveComplaint(complaint.id, { assignedWorker: workers[index % workers.length] })
+      }
+      showToast(`${unassigned.length} complaint${unassigned.length > 1 ? 's' : ''} assigned successfully.`)
+    } catch (updateError) {
+      showToast(updateError.message || 'Complaint assignments could not be saved. Please try again.')
+    }
   }
 
-  function saveChanges() {
+  async function saveChanges() {
     if (!selectedComplaint || !draft) return
     const statusChanged = draft.status !== selectedComplaint.status
-    let saved
     try {
-      saved = saveComplaint(selectedComplaint.id, draft)
-    } catch (error) {
-      if (!(error instanceof ComplaintStorageError)) throw error
-      showToast('Changes could not be saved. Check browser storage and try again.')
-      return
+      await saveComplaint(selectedComplaint.id, draft)
+      showToast(statusChanged
+        ? 'Complaint status updated successfully.'
+        : 'Complaint details updated successfully.')
+    } catch (updateError) {
+      showToast(updateError.message || 'Changes could not be saved. Please try again.')
     }
-    if (!saved) {
-      showToast('This complaint could not be found. Refresh the complaint list and try again.')
-      return
-    }
-    showToast(statusChanged
-      ? 'Complaint status updated successfully.'
-      : 'Complaint details updated successfully.')
   }
 
   const navItems = [
@@ -453,7 +450,7 @@ function AdminDashboard() {
                   </button>
                   <button type="button" onClick={assignUnassigned}>
                     <span className="admin-action-icon action-assign" aria-hidden="true"><AdminIcon name="workers" /></span>
-                    <span><strong>Assign Unassigned Complaints</strong><small>Allocate demo reports to workers</small></span>
+                    <span><strong>Assign Unassigned Complaints</strong><small>Allocate reports to workers</small></span>
                     <span className="admin-action-arrow" aria-hidden="true">→</span>
                   </button>
                   <a href="#admin-analytics">
@@ -480,6 +477,13 @@ function AdminDashboard() {
                 <span className="admin-results-count">{filteredComplaints.length} of {complaints.length} shown</span>
               </div>
 
+              {loading && <p className="complaint-api-state" role="status">Loading complaints…</p>}
+              {!loading && error && (
+                <div className="complaint-api-state complaint-api-error" role="alert">
+                  <p>{error}</p>
+                  <button type="button" onClick={refresh}>Try again</button>
+                </div>
+              )}
               <div className="admin-filter-bar" role="search" aria-label="Filter complaints">
                 <label className="admin-search-field">
                   <span className="visually-hidden">Search complaints</span>
@@ -529,7 +533,7 @@ function AdminDashboard() {
                 </label>
               </div>
 
-              {filteredComplaints.length ? (
+              {loading || error ? null : filteredComplaints.length ? (
                 <div className="admin-table-wrap">
                   <table className="admin-complaints-table">
                     <thead>

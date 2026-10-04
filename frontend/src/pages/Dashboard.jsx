@@ -194,7 +194,7 @@ function ImpactIllustration() {
 
 function Dashboard() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const complaints = useComplaints()
+  const { complaints, loading, error, refresh } = useComplaints()
   const stats = statTemplates.map((stat) => {
     const value = stat.kind === 'total'
       ? complaints.length
@@ -313,7 +313,17 @@ function Dashboard() {
           </div>
 
           <div className="dashboard-complaint-list">
-            {complaints.map((complaint) => (
+            {loading && <p className="complaint-api-state" role="status">Loading complaints…</p>}
+            {!loading && error && (
+              <div className="complaint-api-state complaint-api-error" role="alert">
+                <p>{error}</p>
+                <button type="button" onClick={refresh}>Try again</button>
+              </div>
+            )}
+            {!loading && !error && complaints.length === 0 && (
+              <p className="complaint-api-state">No complaints have been submitted yet.</p>
+            )}
+            {!loading && !error && complaints.map((complaint) => (
               <article className="dashboard-complaint-card" key={complaint.id}>
                 <span className={`complaint-category-icon complaint-${statusKind(complaint.status)}`}>
                   {complaintIcons[complaint.category] || complaintIcons['Road Damage']}

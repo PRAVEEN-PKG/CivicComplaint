@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  ComplaintStorageError,
   formatComplaintDate,
-  updateComplaint,
-  useComplaints,
 } from '../data/complaints.js'
+import { normalizeComplaint, updateComplaint } from '../data/complaints.js'
+import { getComplaintById } from '../services/api.js'
 
 function ComplaintDetailsBrand() {
   return (
@@ -89,12 +88,47 @@ function complaintProgress(complaint) {
 }
 
 function ComplaintDetails({ complaintId }) {
-  const complaints = useComplaints()
-  const complaint = complaints.find((item) => item.id === complaintId) || null
+  const [complaint, setComplaint] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [isReopening, setIsReopening] = useState(false)
   const [notice, setNotice] = useState('')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [supportOpen, setSupportOpen] = useState(false)
   const dialogRef = useRef(null)
+
+  async function loadComplaint() {
+    setLoading(true)
+    setLoadError('')
+    try {
+      setComplaint(normalizeComplaint(await getComplaintById(complaintId)))
+    } catch (error) {
+      if (error.message === 'Complaint not found') setComplaint(null)
+      else setLoadError(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    let current = true
+    getComplaintById(complaintId)
+      .then((result) => {
+        if (!current) return
+        setComplaint(normalizeComplaint(result))
+        setLoadError('')
+        setLoading(false)
+      })
+      .catch((error) => {
+        if (!current) return
+        setComplaint(null)
+        setLoadError(error.message === 'Complaint not found' ? '' : error.message)
+        setLoading(false)
+      })
+    return () => {
+      current = false
+    }
+  }, [complaintId])
 
   useEffect(() => {
     if (!supportOpen) return undefined
@@ -130,14 +164,38 @@ function ComplaintDetails({ complaintId }) {
     setNotice('A local copy of the complaint summary was downloaded.')
   }
 
-  function reopenComplaint() {
+  async function reopenComplaint() {
+    setIsReopening(true)
     try {
-      const updated = updateComplaint(complaint.id, { status: 'Reopened' })
-      if (updated) setNotice('Complaint reopened for follow-up. The update is saved in this browser.')
+      const updated = await updateComplaint(complaint.id, { status: 'Reopened' })
+      setComplaint(updated)
+      setNotice('Complaint reopened for follow-up.')
     } catch (error) {
-      if (!(error instanceof ComplaintStorageError)) throw error
-      setNotice('The complaint could not be reopened because browser storage is unavailable. Please try again.')
+      setNotice(error.message || 'The complaint could not be reopened. Please try again.')
+    } finally {
+      setIsReopening(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="dashboard-page complaint-details-page">
+        <main className="dashboard-container details-not-found" role="status">Loading complaint details…</main>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="dashboard-page complaint-details-page">
+        <main className="dashboard-container details-not-found" role="alert">
+          <span className="dashboard-eyebrow">CITIZEN PORTAL</span>
+          <h1>Unable to load complaint</h1>
+          <p>{loadError}</p>
+          <button className="dashboard-primary-button" type="button" onClick={loadComplaint}>Try again</button>
+        </main>
+      </div>
+    )
   }
 
   if (!complaint) {
@@ -272,7 +330,7 @@ function ComplaintDetails({ complaintId }) {
               {complaint.image ? (
                 <div className="details-photo">
                   <ComplaintPhoto />
-                  <span><strong>Issue location photo</strong><small>{complaint.image.name} · Demo preview</small></span>
+                  <span><strong>Issue location photo</strong>                  <small>{complaint.image.name || 'Complaint photo'} · Preview</small></span>
                 </div>
               ) : (
                 <div className="details-no-photo">
@@ -325,9 +383,9 @@ function ComplaintDetails({ complaintId }) {
                 <span aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
                 </span>
-                <span><small>{complaint.status === 'Resolved' ? 'Resolved on' : 'Latest update'}</small><strong>{formatComplaintDate(updates[0].timestamp)}</strong></span>
+                <span><small>{complaint.status === 'Resolved' ? 'Resolved on' : 'Latest update'}</small><strong>{formatComplaintDate(updates[0]?.timestamp || complaint.updatedAt || complaint.submittedAt)}</strong></span>
               </div>
-              <p className="details-eta-note">{complaint.status === 'Resolved' ? 'The assigned department has marked this report complete.' : `Current service team: ${complaint.department}.`}</p>
+              <p className="details-eta-note">{complaint.status === 'Resolved' ? 'The assigned department has marked this report complete.' : `Current service team: ${complaint.department || 'Not yet assigned'}.`}</p>
             </section>
 
             <section className="details-panel details-location-panel" aria-labelledby="location-title">
@@ -373,12 +431,12 @@ function ComplaintDetails({ complaintId }) {
                 <span aria-hidden="true">↓</span>
               </button>
               {complaint.status === 'Resolved' && (
-                <button className="details-reopen-button" type="button" onClick={reopenComplaint}>
-                  Reopen complaint
+                <button className="details-reopen-button" type="button" onClick={reopenComplaint} disabled={isReopening}>
+                  {isReopening ? 'Reopening…' : 'Reopen complaint'}
                 </button>
               )}
               {notice && <p className="details-action-notice" role="status">{notice}</p>}
-              <p className="details-demo-note">Actions on this demo page do not contact a service or update a database.</p>
+              <p className="details-demo-note">Support actions are a prototype placeholder. Complaint updates are saved through the service.</p>
             </section>
           </aside>
         </div>

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import {
-  ComplaintStorageError,
   formatComplaintDate,
   updateComplaint,
   useComplaints,
@@ -38,7 +37,7 @@ function statusKind(status) {
 }
 
 function WorkerDashboard() {
-  const complaints = useComplaints()
+  const { complaints, loading, error, refresh } = useComplaints()
   const session = getDemoSession()
   const workerEmail = session?.email || ''
   const workerName = session?.name || 'Field Worker'
@@ -86,29 +85,14 @@ function WorkerDashboard() {
     window.location.href = '/login'
   }
 
-  function performWorkAction(complaint) {
+  async function performWorkAction(complaint) {
     const accepting = ['Submitted', 'Under Review', 'Reopened'].includes(complaint.status)
     const expectedStatus = accepting ? 'In Progress' : 'Resolved'
     try {
-      const updated = updateComplaint(
-        complaint.id,
-        { status: expectedStatus },
-        {
-          actor: 'worker',
-          title: accepting
-            ? (complaint.status === 'Reopened'
-              ? 'Worker accepted reopened complaint'
-              : 'Worker accepted the complaint')
-            : 'Work marked as completed',
-          description: accepting
-            ? `${workerName} accepted the assigned work for ${complaint.department}.`
-            : `${workerName} marked the assigned work as completed.`,
-        },
-      )
+      const updated = await updateComplaint(complaint.id, { status: expectedStatus })
       if (updated) setNotice(`Complaint ${complaint.id} is now ${updated.status}.`)
     } catch (error) {
-      if (!(error instanceof ComplaintStorageError)) throw error
-      setNotice('This update could not be saved in browser storage. Please try again.')
+      setNotice(error.message || 'This update could not be saved. Please try again.')
     }
   }
 
@@ -218,7 +202,14 @@ function WorkerDashboard() {
               </div>
             </div>
 
-            {visibleComplaints.length ? (
+            {loading && <p className="complaint-api-state" role="status">Loading assigned complaints…</p>}
+            {!loading && error && (
+              <div className="complaint-api-state complaint-api-error" role="alert">
+                <p>{error}</p>
+                <button type="button" onClick={refresh}>Try again</button>
+              </div>
+            )}
+            {!loading && !error && visibleComplaints.length ? (
               <div className="worker-complaint-list">
                 {visibleComplaints.map((complaint) => (
                   <article className={`worker-complaint-card${selectedId === complaint.id ? ' worker-complaint-selected' : ''}`} key={complaint.id}>
@@ -253,7 +244,7 @@ function WorkerDashboard() {
                   </article>
                 ))}
               </div>
-            ) : (
+            ) : !loading && !error ? (
               <div className="worker-empty-state" role="status">
                 <span aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none"><path d="M4 19h16M6 19V8l6-4 6 4v11M9 12h6M9 15h6" /></svg>
@@ -264,7 +255,7 @@ function WorkerDashboard() {
                   <button type="button" onClick={() => { setSearch(''); setActiveFilter('All') }}>Clear filters</button>
                 )}
               </div>
-            )}
+            ) : null}
           </section>
 
           {selectedComplaint && (

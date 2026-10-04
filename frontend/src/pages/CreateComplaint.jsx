@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { ComplaintStorageError, createComplaint } from '../data/complaints.js'
-import { logoutDemoUser } from '../data/demoAuth.js'
+import { createComplaint } from '../data/complaints.js'
+import { getDemoSession, logoutDemoUser } from '../data/demoAuth.js'
 
 const DESCRIPTION_LIMIT = 600
 const PHOTO_LIMIT = 10 * 1024 * 1024
@@ -142,6 +142,7 @@ function CreateComplaint() {
   const [locationNotice, setLocationNotice] = useState('')
   const [notice, setNotice] = useState('')
   const [success, setSuccess] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [submittedComplaintId, setSubmittedComplaintId] = useState('')
   const [previewUrl, setPreviewUrl] = useState('')
   const [touched, setTouched] = useState({})
@@ -204,7 +205,7 @@ function CreateComplaint() {
     selectPhoto(event.dataTransfer.files?.[0])
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
     setNotice('')
 
@@ -214,19 +215,24 @@ function CreateComplaint() {
       return
     }
 
+    setIsSubmitting(true)
     try {
-      const createdComplaint = createComplaint({
+      const session = getDemoSession()
+      const createdComplaint = await createComplaint({
         title,
         category: category === 'Pothole / Road Damage' ? 'Road Damage' : category,
         description,
         location,
-        image: photo,
+        citizenName: session?.name || 'Citizen',
+        citizenEmail: session?.email || '',
+        photo: photo ? { name: photo.name, type: photo.type, size: photo.size } : null,
       })
       setSubmittedComplaintId(createdComplaint.id)
       setSuccess(true)
     } catch (error) {
-      if (!(error instanceof ComplaintStorageError)) throw error
-      setNotice('Your complaint could not be saved in this browser. Check that browser storage is available, then try again.')
+      setNotice(error.message || 'Your complaint could not be submitted. Please try again.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -606,10 +612,10 @@ function CreateComplaint() {
               <button
                 className="complaint-submit-button"
                 type="submit"
-                disabled={!formIsComplete}
+                disabled={!formIsComplete || isSubmitting}
                 aria-describedby="complaint-submit-help"
               >
-                Submit Complaint <span aria-hidden="true">→</span>
+                {isSubmitting ? 'Submitting…' : 'Submit Complaint'} <span aria-hidden="true">→</span>
               </button>
             </div>
             <span className="visually-hidden" id="complaint-submit-help">
@@ -665,7 +671,7 @@ function CreateComplaint() {
               Your report has been recorded for review. You can track its progress from your dashboard.
             </p>
             <div className="complaint-success-id">
-              <span>Demo complaint ID</span>
+              <span>Complaint ID</span>
               <strong>{submittedComplaintId}</strong>
             </div>
             <div className="complaint-success-actions">
@@ -677,7 +683,7 @@ function CreateComplaint() {
               </a>
             </div>
             <p className="complaint-success-demo-note">
-              Demo only — complaint details are saved in this browser and are not sent to a server.
+              Your report has been saved to the CivicComplaint service.
             </p>
           </section>
         </div>
