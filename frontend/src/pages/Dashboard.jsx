@@ -53,6 +53,7 @@ const stats = [
 
 const complaints = [
   {
+    id: 'CC-2026-00124',
     category: 'Pothole',
     title: 'Large pothole near Main Road',
     location: 'Main Road, Sector 5',
@@ -66,6 +67,7 @@ const complaints = [
     ),
   },
   {
+    id: 'CC-2026-00123',
     category: 'Streetlight',
     title: 'Streetlight not working',
     location: 'Park Avenue',
@@ -80,6 +82,7 @@ const complaints = [
     ),
   },
   {
+    id: 'CC-2026-00122',
     category: 'Garbage',
     title: 'Garbage collection issue',
     location: 'Green Park',
@@ -93,6 +96,7 @@ const complaints = [
     ),
   },
   {
+    id: 'CC-2026-00121',
     category: 'Water',
     title: 'Water leakage on road',
     location: 'Station Road',
@@ -317,7 +321,11 @@ function Dashboard() {
                   <span className="status-indicator" aria-hidden="true" />
                   {complaint.status}
                 </span>
-                <a className="complaint-details-link" href="#recent-complaints">
+                <a
+                  className="complaint-details-link"
+                  href={`/complaints/${encodeURIComponent(complaint.id)}`}
+                  aria-label={`View details for ${complaint.title}`}
+                >
                   View Details <span aria-hidden="true">→</span>
                 </a>
               </article>
